@@ -1,15 +1,15 @@
 /**** Start of imports. If edited, may not auto-convert in the playground. ****/
-var image = ee.Image("projects/ee-tcr19cewr04/assets/upwork/AM/resampled/CC"),
-    image2 = ee.Image("projects/ee-tcr19cewr04/assets/upwork/AM/resampled/CsCher"),
-    image4 = ee.Image("projects/ee-tcr19cewr04/assets/upwork/AM/resampled/SMU_EU_S_TAWC"),
-    image5 = ee.Image("projects/ee-tcr19cewr04/assets/upwork/AM/resampled/STU_EU_S_OC"),
-    image6 = ee.Image("projects/ee-tcr19cewr04/assets/upwork/AM/resampled/STU_EU_S_SILT"),
-    image3 = ee.Image("projects/ee-tcr19cewr04/assets/upwork/AM/resampled/STU_EU_T_CLAY"),
-    image8 = ee.Image("projects/ee-tcr19cewr04/assets/upwork/AM/resampled/STU_EU_T_GRAVEL"),
-    image9 = ee.Image("projects/ee-tcr19cewr04/assets/upwork/AM/resampled/STU_EU_T_SAND"),
-    image7 = ee.Image("projects/ee-tcr19cewr04/assets/upwork/AM/soil_loss_classified");
+var image = ee.Image("projects/ee-landusepm/assets/CC"),
+    image2 = ee.Image("projects/ee-landusepm/assets/CsCher"),
+    image3 = ee.Image("projects/ee-landusepm/assets/STU_EU_T_CLAY_resampled_export"),
+    image4 = ee.Image("projects/ee-landusepm/assets/SMU_EU_S_TAWC"),
+    image5 = ee.Image("projects/ee-landusepm/assets/STU_EU_S_OC"),
+    image6 = ee.Image("projects/ee-landusepm/assets/STU_EU_S_SILT_resampled_export"),
+    image7 = ee.Image("projects/ee-landusepm/assets/soil_loss_classified"),
+    image8 = ee.Image("projects/ee-landusepm/assets/STU_EU_T_GRAVEL_resampled_export"),
+    image9 = ee.Image("projects/ee-landusepm/assets/STU_EU_T_SAND_resampled_export");
 /***** End of imports. If edited, may not auto-convert in the playground. *****/
-image = image.rename('CC') 
+image = image.rename('CC')
 image2 = image2.rename('CsCher')
 image3 = image3.rename('STU_EU_T_CLAY')
 image4 = image4.rename('SMU_EU_T_TAWC')
@@ -48,15 +48,11 @@ var train = sample.filter(ee.Filter.lte('random', 0.8));
 var test = sample.filter(ee.Filter.gt('random', 0.8));
 print('Train size', train.size(), 'Test size', test.size());
 
-// Do random forest regression
-var regression = ee.Classifier.smileRandomForest(50).train(train, 'RUSLE_SL_2012', featuresbandname)
-  .setOutputMode('REGRESSION');
-
+// Do random forest classification
+var classifier = ee.Classifier.smileRandomForest(50).train(train, 'RUSLE_SL_2012', featuresbandname)
 
 // Make prediction
-var prediction = combined.classify(regression, 'Prediction');
-
-
+var prediction = combined.classify(classifier, 'classification');
 
 /*
 ####################
@@ -68,7 +64,7 @@ var test = prediction.sampleRegions({
   scale: scale
 });
 
-var testConfusionMatrix = test.errorMatrix('RUSLE_SL_2012', 'Prediction')
+var testConfusionMatrix = test.errorMatrix('RUSLE_SL_2012', 'classification')
 
 print('Confusion Matrix', testConfusionMatrix);
 print('Test Accuracy', testConfusionMatrix.accuracy());
@@ -78,5 +74,3 @@ print('Test Accuracy', testConfusionMatrix.accuracy());
 
 Map.addLayer(image7, { min: 1, max: 4, palette: ['blue', 'cyan',  'yellow', 'red']}, 'Actual soil loss');
 Map.addLayer(prediction, { min: 1, max: 4, palette: ['blue', 'cyan',  'yellow', 'red']}, 'Predicted soil loss');
-
-
