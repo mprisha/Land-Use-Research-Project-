@@ -83,6 +83,8 @@ print('The model is trained')
 
 var button2 = ui.Button('Predict')
 button2.onClick(function(){
+  
+
 
 var testConfusionMatrix = test.errorMatrix('RUSLE_SL_2012', 'classification')
 
@@ -92,6 +94,8 @@ var center = {lon: 5, lat: 47, zoom: 5};
 // Create two maps.
 var leftMap = ui.Map(center);
 var rightMap = ui.Map(center);
+
+
 
 // Remove UI controls from both maps, but leave zoom control on the left map.
 leftMap.setControlVisibility(false);
@@ -115,6 +119,8 @@ ui.root.clear();
 // Add our split panel to the root panel.
 ui.root.add(splitPanel);
 //---------------------------------------------
+
+
 
 leftMap.addLayer(image7, { min: 1, max: 4, palette: ['blue', 'cyan',  'yellow', 'red']}, 'Actual soil loss');
 rightMap.addLayer(prediction, { min: 1, max: 4, palette: ['blue', 'cyan',  'yellow', 'red']}, 'Predicted soil loss');
@@ -166,9 +172,37 @@ for (var i = 0; i < palette.length; i++) {
 // Add legend to the maps
 leftMap.add(legendPanel);
 
+// Add labels
+var actualLabel = ui.Label({
+  value: 'Actual',
+  style: {
+    position: 'top-left',
+    fontSize: '18px',
+    fontWeight: 'bold',
+    padding: '10px'
+  }
+});
+
+var predictedLabel = ui.Label({
+  value: 'Predicted',
+  style: {
+    position: 'top-right',
+    fontSize: '18px',
+    fontWeight: 'bold',
+    padding: '10px'
+  }
+});
+
+// Add labels to the maps
+leftMap.add(actualLabel);
+rightMap.add(predictedLabel);
+
   
 })
 
 
 print(button)
 print(button2)
+
+
+
