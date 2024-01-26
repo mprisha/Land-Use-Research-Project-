@@ -25,17 +25,23 @@ var features = image.addBands([image2, image3, image4, image5, image6, image8, i
 var target = image7
 var targetbandname = 'RUSLE_SL_2012'
 var featuresbandname = features.bandNames()
-print('features:', features);
+//print('features:', features);
 var roi = image7.geometry()
-Map.centerObject(roi)
+//Map.centerObject(roi)
+
+// Get the bounding box of the feature collection or geometry
+//var boundingBox = roi.bounds();
+//print(boundingBox.centroid(1).coordinates())
+
 var scale = 23191.56058193195;
-print('target:', target);
+//print('target:', target);
 // Combine the features and target into one image
 var combined = features.addBands(target);
 
 
 //--------------------------------------------------------------------------------------------
-// Sample the data
+
+  // Sample the data
 var sample = combined.sample({
   region : roi,
   scale: scale,
@@ -46,12 +52,10 @@ Map.addLayer(sample, {}, 'Sample', false);
 // Split into train and test
 var train = sample.filter(ee.Filter.lte('random', 0.8));
 var test = sample.filter(ee.Filter.gt('random', 0.8));
-print('Train size', train.size(), 'Test size', test.size());
 
-// Do random forest classification
+  // Do random forest classification
 var classifier = ee.Classifier.smileRandomForest(50).train(train, 'RUSLE_SL_2012', featuresbandname)
-
-// Make prediction
+  // Make prediction
 var prediction = combined.classify(classifier, 'classification');
 
 /*
@@ -64,13 +68,107 @@ var test = prediction.sampleRegions({
   scale: scale
 });
 
-var testConfusionMatrix = test.errorMatrix('RUSLE_SL_2012', 'classification')
 
-print('Confusion Matrix', testConfusionMatrix);
-print('Test Accuracy', testConfusionMatrix.accuracy());
+
+
 /*
 ##################################################
 */
 
-Map.addLayer(image7, { min: 1, max: 4, palette: ['blue', 'cyan',  'yellow', 'red']}, 'Actual soil loss');
-Map.addLayer(prediction, { min: 1, max: 4, palette: ['blue', 'cyan',  'yellow', 'red']}, 'Predicted soil loss');
+var button = ui.Button('Train')
+button.onClick(function(){
+print('Train size', train.size(), 'Test size', test.size());
+print('The model is trained')
+})
+
+var button2 = ui.Button('Predict')
+button2.onClick(function(){
+
+var testConfusionMatrix = test.errorMatrix('RUSLE_SL_2012', 'classification')
+
+print('Test Accuracy', testConfusionMatrix.accuracy());
+
+var center = {lon: 5, lat: 47, zoom: 5};
+// Create two maps.
+var leftMap = ui.Map(center);
+var rightMap = ui.Map(center);
+
+// Remove UI controls from both maps, but leave zoom control on the left map.
+leftMap.setControlVisibility(false);
+rightMap.setControlVisibility(false);
+leftMap.setControlVisibility({zoomControl: true});
+
+// Link them together.
+var linker = new ui.Map.Linker([leftMap, rightMap]);
+
+// Create a split panel with the two maps.
+var splitPanel = ui.SplitPanel({
+  firstPanel: leftMap,
+  secondPanel: rightMap,
+  orientation: 'horizontal',
+  wipe: true
+});
+
+// Remove the default map from the root panel.
+ui.root.clear();
+
+// Add our split panel to the root panel.
+ui.root.add(splitPanel);
+//---------------------------------------------
+
+leftMap.addLayer(image7, { min: 1, max: 4, palette: ['blue', 'cyan',  'yellow', 'red']}, 'Actual soil loss');
+rightMap.addLayer(prediction, { min: 1, max: 4, palette: ['blue', 'cyan',  'yellow', 'red']}, 'Predicted soil loss');
+
+// Add legends
+var legendPanel = ui.Panel({
+  style: {
+    position: 'bottom-left',
+    padding: '8px 15px'
+  }
+});
+
+var legendTitle = ui.Label({
+  value: 'Soil Loss Legend',
+  style: {
+    fontWeight: 'bold',
+    fontSize: '16px',
+    margin: '0 0 4px 0',
+    padding: '0'
+  }
+});
+
+legendPanel.add(legendTitle)
+
+var palette = ['blue', 'cyan', 'yellow', 'red'];
+var legendLabels = ['Low erossion', 'Moderate erosion', 'High erosion', 'Very high erosion'];
+
+for (var i = 0; i < palette.length; i++) {
+  var color = palette[i];
+  var label = legendLabels[i];
+
+  var legendRow = ui.Panel({
+    widgets: [
+      ui.Label({
+        style: { backgroundColor: color, padding: '8px', margin: '0 0 4px 0' }
+      }),
+      ui.Label({
+        value: label,
+        style: { margin: '0 0 4px 6px' }
+      })
+    ],
+    layout: ui.Panel.Layout.Flow('horizontal')
+  });
+
+  legendPanel.add(legendRow);
+}
+
+
+// Add legend to the maps
+leftMap.add(legendPanel);
+
+  
+})
+
+
+print(button)
+print(button2)
